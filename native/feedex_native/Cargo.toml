@@ -1,0 +1,13 @@
+[package]
+name = "feedex_native"
+version = "0.1.0"
+authors = []
+edition = "2018"
+
+[lib]
+name = "feedex_native"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+rustler = "0.24.0"
