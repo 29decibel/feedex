@@ -1,4 +1,8 @@
 defmodule Feedex.Native do
+  @moduledoc """
+  Native support of Feedex
+  """
+
   use Rustler,
     otp_app: :feedex,
     crate: :feedex_native
@@ -8,6 +12,9 @@ defmodule Feedex.Native do
 end
 
 defmodule TeslaClient do
+  @moduledoc """
+  Tesla client with Hackney and follow redirects
+  """
   use Tesla
 
   adapter(Tesla.Adapter.Hackney)
@@ -17,6 +24,10 @@ defmodule TeslaClient do
 end
 
 defmodule Feedex do
+  @moduledoc """
+  Feedex is a RSS feed fetcher and parser
+  """
+
   # https://gist.github.com/sasa1977/5967224
   import Record, only: [defrecord: 2, extract: 2]
   defrecord :xmlElement, extract(:xmlElement, from_lib: "xmerl/include/xmerl.hrl")
@@ -37,20 +48,28 @@ defmodule Feedex do
       %{"Err" => _err} ->
         case Feedex.Native.parse_atom(body) do
           %{"Err" => err} ->
-            IO.inspect("Can not parse #{url} - #{err}")
+            {:error, "Can not parse #{url} - #{err}"}
 
           {:error, err} ->
-            IO.inspect("Can not parse #{url} - #{err}")
+            {:error, "Can not parse #{url} - #{err}"}
 
-          r ->
-            IO.inspect(r |> Map.keys())
-            nil
+          result ->
+            parse_rss_result_map(result)
         end
 
       %{"Ok" => result} ->
-        IO.inspect(result |> Map.keys())
+        parse_rss_result_map(result)
+    end
+  end
 
-        {:ok, result}
+  defp parse_json_feed(url, body) do
+    case Jason.decode(body) do
+      {:ok, result} ->
+        parse_rss_result_map(result)
+
+      _ ->
+        IO.inspect("WARN: Can not parse #{url}, the headers might lie, so we try the xml version")
+        parse_xml_feed(url, body)
     end
   end
 
@@ -66,14 +85,7 @@ defmodule Feedex do
           end)
 
         if content_type do
-          case Jason.decode(body) do
-            {:ok, result} ->
-              IO.inspect(result |> Map.keys())
-
-            _ ->
-              IO.inspect("Can not parse #{url}, the headers might lie, so we try the xml version")
-              parse_xml_feed(url, body)
-          end
+          parse_json_feed(url, body)
         else
           parse_xml_feed(url, body)
         end
@@ -82,6 +94,17 @@ defmodule Feedex do
         "Can not get #{url}"
     end
   end
+
+  defp parse_rss_result_map(result) do
+    # do something to the result
+    IO.inspect(result |> Map.keys())
+    count = result |> get_feed_items() |> Enum.count()
+    IO.inspect("Total: #{count}")
+  end
+
+  def get_feed_items(%{"items" => items}), do: items
+  def get_feed_items(%{"entries" => entries}), do: entries
+  def get_feed_items(_), do: []
 
   def parse_all_example_urls do
     parse_example_opml() |> Enum.each(&parse_feed_url(&1))
