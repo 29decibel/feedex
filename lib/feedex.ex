@@ -32,38 +32,50 @@ defmodule Feedex do
     |> Enum.filter(&(!is_nil(&1)))
   end
 
+  defp parse_xml_feed(url, body) do
+    case Feedex.Native.parse_rss(body) do
+      %{"Err" => _err} ->
+        case Feedex.Native.parse_atom(body) do
+          %{"Err" => err} ->
+            IO.inspect("Can not parse #{url} - #{err}")
+
+          {:error, err} ->
+            IO.inspect("Can not parse #{url} - #{err}")
+
+          r ->
+            IO.inspect(r |> Map.keys())
+            nil
+        end
+
+      %{"Ok" => result} ->
+        IO.inspect(result |> Map.keys())
+
+        {:ok, result}
+    end
+  end
+
+  @json_header_value "application/json"
+
   def parse_feed_url(url) do
     case TeslaClient.get(url) do
       {:ok, %{body: body, headers: headers}} ->
         content_type =
           headers
           |> Enum.find_value(nil, fn {_k, v} ->
-            String.contains?(v, "application/json")
+            String.contains?(v, @json_header_value)
           end)
 
         if content_type do
-          result = Jason.decode!(body)
-          IO.inspect(result |> Map.keys())
-        else
-          case Feedex.Native.parse_rss(body) do
-            %{"Err" => _err} ->
-              case Feedex.Native.parse_atom(body) do
-                %{"Err" => err} ->
-                  IO.inspect("Can not parse #{url} - #{err}")
-
-                {:error, err} ->
-                  IO.inspect("Can not parse #{url} - #{err}")
-
-                r ->
-                  IO.inspect(r |> Map.keys())
-                  nil
-              end
-
-            %{"Ok" => result} ->
+          case Jason.decode(body) do
+            {:ok, result} ->
               IO.inspect(result |> Map.keys())
 
-              {:ok, result}
+            _ ->
+              IO.inspect("Can not parse #{url}, the headers might lie, so we try the xml version")
+              parse_xml_feed(url, body)
           end
+        else
+          parse_xml_feed(url, body)
         end
 
       _ ->
