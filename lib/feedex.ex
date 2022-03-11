@@ -28,6 +28,8 @@ defmodule Feedex do
     defstruct id: nil, title: nil, date: nil, content: nil, link: nil, authors: []
   end
 
+  import FeedExtractor
+
   @moduledoc """
   Feedex is a RSS feed fetcher and parser
   """
@@ -118,82 +120,6 @@ defmodule Feedex do
       }
     )
   end
-
-  ############### GRAB item content ########################
-  defp get_item_content(%{
-         "content" => %{
-           "value" => value
-         }
-       })
-       when is_binary(value),
-       do: value
-
-  defp get_item_content(%{"content" => content}) when is_binary(content), do: content
-
-  defp get_item_content(%{
-         "description" => %{
-           "value" => value
-         }
-       })
-       when not is_nil(value),
-       do: value
-
-  defp get_item_content(%{"description" => description}) when not is_nil(description),
-    do: description
-
-  defp get_item_content(%{"content_html" => content_html}), do: content_html
-
-  defp get_item_content(_), do: nil
-
-  ############################ GET ITEMS ####################################
-  def get_feed_items(%{"items" => items}), do: items
-  def get_feed_items(%{"entries" => entries}), do: entries
-  def get_feed_items(_), do: []
-
-  ############################# GET DATE #########################################
-
-  defp get_item_date(%{"date_modified" => date_modified}) when is_binary(date_modified),
-    do: date_modified
-
-  defp get_item_date(%{"date_published" => date_published}) when is_binary(date_published),
-    do: date_published
-
-  defp get_item_date(%{"updated" => updated}) when is_binary(updated), do: updated
-  defp get_item_date(%{"published" => published}) when is_binary(published), do: published
-  defp get_item_date(%{"pub_date" => pub_date}) when is_binary(pub_date), do: pub_date
-
-  ##################### GET title ################################
-  defp get_item_title(%{"title" => %{"value" => value}}) when is_binary(value), do: value
-  defp get_item_title(%{"title" => title}) when is_binary(title), do: title
-  defp get_item_title(_), do: "No title"
-
-  ################# GET authors ####################
-  defp get_item_authors(%{"authors" => authors}) when is_list(authors) and length(authors) > 0 do
-    authors |> Enum.map(&get_author_name(&1)) |> Enum.reject(&is_nil(&1))
-  end
-
-  defp get_item_authors(%{"author" => author}) when is_binary(author), do: [author]
-  defp get_item_authors(_), do: []
-
-  defp get_author_name(%{"name" => name}), do: name
-  defp get_author_name(_), do: nil
-
-  ############### GET LINK #######################
-  defp get_item_link(%{"links" => links}) when is_list(links) and length(links) > 0 do
-    case links |> Enum.find(nil, &(&1["rel"] == "self")) do
-      nil -> links |> List.first() |> Map.get("href")
-      self_link -> self_link |> Map.get("href")
-    end
-  end
-
-  defp get_item_link(%{"link" => link}), do: link
-  defp get_item_link(%{"url" => url}), do: url
-
-  ############# ID #########################
-  defp get_item_id(%{"id" => id}) when is_binary(id), do: id
-  defp get_item_id(%{"guid" => %{"value" => value}}) when is_binary(value), do: value
-  # fallback using link as feed item id
-  defp get_item_id(item), do: get_item_link(item)
 
   # https://hexdocs.pm/timex/Timex.Format.DateTime.Formatters.Default.html#module-compound-directives
   def parse_date(date_string) do
