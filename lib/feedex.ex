@@ -108,6 +108,7 @@ defmodule Feedex do
     first_item = result |> get_feed_items() |> List.first()
     first_item |> get_item_title()
     first_item |> get_item_link()
+    first_item |> get_item_id()
     IO.inspect(first_item)
 
     if date == nil do
@@ -133,10 +134,10 @@ defmodule Feedex do
            "value" => value
          }
        })
-       when not is_nil(value),
+       when is_binary(value),
        do: value
 
-  defp get_item_content(%{"content" => content}) when not is_nil(content), do: content
+  defp get_item_content(%{"content" => content}) when is_binary(content), do: content
 
   defp get_item_content(%{
          "description" => %{
@@ -185,6 +186,12 @@ defmodule Feedex do
 
   defp get_item_link(%{"link" => link}), do: link
   defp get_item_link(%{"url" => url}), do: url
+
+  ############# ID #########################
+  defp get_item_id(%{"id" => id}) when is_binary(id), do: id
+  defp get_item_id(%{"guid" => %{"value" => value}}) when is_binary(value), do: value
+  # fallback using link as feed item id
+  defp get_item_id(item), do: get_item_link(item)
 
   # https://hexdocs.pm/timex/Timex.Format.DateTime.Formatters.Default.html#module-compound-directives
   def parse_date(date_string) do
