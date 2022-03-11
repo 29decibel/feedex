@@ -24,6 +24,10 @@ defmodule TeslaClient do
 end
 
 defmodule Feedex do
+  defmodule Item do
+    defstruct id: nil, title: nil, date: nil, content: nil, link: nil
+  end
+
   @moduledoc """
   Feedex is a RSS feed fetcher and parser
   """
@@ -99,33 +103,17 @@ defmodule Feedex do
   end
 
   defp parse_rss_result_map(result) do
-    # do something to the result
-    IO.inspect(result |> Map.keys())
-    count = result |> get_feed_items() |> Enum.count()
-    item = result |> get_feed_items() |> List.first() |> get_item_content()
-    date = result |> get_feed_items() |> List.first() |> get_item_date() |> parse_date()
-
-    first_item = result |> get_feed_items() |> List.first()
-    first_item |> get_item_title()
-    first_item |> get_item_link()
-    first_item |> get_item_id()
-    IO.inspect(first_item)
-
-    if date == nil do
-      # 01 Mar 2022 12:00 +0000
-      # Tue, 24 March 2021 08:00:00 EST
-      IO.inspect(
-        "!!!!!!!!!!!!!can not parse #{result |> get_feed_items() |> List.first() |> get_item_date()}"
-      )
-    else
-      IO.inspect(date)
-    end
-
-    if item == nil do
-      IO.inspect(result |> get_feed_items() |> List.first())
-    end
-
-    IO.inspect("Total: #{count}")
+    result
+    |> get_feed_items()
+    |> Enum.map(
+      &%Item{
+        id: get_item_id(&1),
+        title: get_item_title(&1),
+        date: get_item_date(&1) |> parse_date,
+        content: get_item_content(&1),
+        link: get_item_link(&1)
+      }
+    )
   end
 
   ############### GRAB item content ########################
@@ -209,7 +197,7 @@ defmodule Feedex do
   end
 
   def parse_all_example_urls do
-    parse_example_opml() |> Enum.each(&parse_feed_url(&1))
+    parse_example_opml() |> Enum.map(&parse_feed_url(&1))
   end
 
   def attr(node, name), do: node |> xpath('./@#{name}') |> extract_attr
