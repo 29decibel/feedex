@@ -97,4 +97,21 @@ defmodule Feedex do
   def parse_all_example_urls do
     parse_example_opml() |> Enum.map(&parse_feed_url(&1))
   end
+
+  def get_all_example_fav_icons do
+    # parse_example_opml() |> Enum.map(&FaviconFinder.find_favicon(&1))
+    parse_example_opml()
+    |> Enum.each(fn url ->
+      case parse_feed_url(url) do
+        [item | _] ->
+          case FaviconFinder.find_favicon(item.link) do
+            [l | _] -> nil
+            _ -> IO.inspect("xxxxxxxxxxxxx --------> not found for #{item.link}")
+          end
+
+        _ ->
+          IO.inspect("no feed items")
+      end
+    end)
+  end
 end

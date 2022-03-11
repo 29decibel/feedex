@@ -26,6 +26,7 @@ defmodule Feedex.MixProject do
       {:hackney, "~> 1.17"},
       {:jason, ">= 1.0.0"},
       {:timex, "~> 3.0"},
+      {:floki, "~> 0.32.0"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false}
     ]
   end
