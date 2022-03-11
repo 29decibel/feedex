@@ -25,7 +25,7 @@ end
 
 defmodule Feedex do
   defmodule Item do
-    defstruct id: nil, title: nil, date: nil, content: nil, link: nil
+    defstruct id: nil, title: nil, date: nil, content: nil, link: nil, authors: []
   end
 
   @moduledoc """
@@ -103,6 +103,8 @@ defmodule Feedex do
   end
 
   defp parse_rss_result_map(result) do
+    IO.inspect(result)
+
     result
     |> get_feed_items()
     |> Enum.map(
@@ -111,7 +113,8 @@ defmodule Feedex do
         title: get_item_title(&1),
         date: get_item_date(&1) |> parse_date,
         content: get_item_content(&1),
-        link: get_item_link(&1)
+        link: get_item_link(&1),
+        authors: get_item_authors(&1)
       }
     )
   end
@@ -163,6 +166,17 @@ defmodule Feedex do
   defp get_item_title(%{"title" => %{"value" => value}}) when is_binary(value), do: value
   defp get_item_title(%{"title" => title}) when is_binary(title), do: title
   defp get_item_title(_), do: "No title"
+
+  ################# GET authors ####################
+  defp get_item_authors(%{"authors" => authors}) when is_list(authors) and length(authors) > 0 do
+    authors |> Enum.map(&get_author_name(&1)) |> Enum.reject(&is_nil(&1))
+  end
+
+  defp get_item_authors(%{"author" => author}) when is_binary(author), do: [author]
+  defp get_item_authors(_), do: []
+
+  defp get_author_name(%{"name" => name}), do: name
+  defp get_author_name(_), do: nil
 
   ############### GET LINK #######################
   defp get_item_link(%{"links" => links}) when is_list(links) and length(links) > 0 do
