@@ -105,6 +105,11 @@ defmodule Feedex do
     item = result |> get_feed_items() |> List.first() |> get_item_content()
     date = result |> get_feed_items() |> List.first() |> get_item_date() |> parse_date()
 
+    first_item = result |> get_feed_items() |> List.first()
+    first_item |> get_item_title()
+    first_item |> get_item_link()
+    IO.inspect(first_item)
+
     if date == nil do
       # 01 Mar 2022 12:00 +0000
       # Tue, 24 March 2021 08:00:00 EST
@@ -125,7 +130,7 @@ defmodule Feedex do
   ############### GRAB item content ########################
   defp get_item_content(%{
          "content" => %{
-           value: value
+           "value" => value
          }
        })
        when not is_nil(value),
@@ -135,7 +140,7 @@ defmodule Feedex do
 
   defp get_item_content(%{
          "description" => %{
-           value: value
+           "value" => value
          }
        })
        when not is_nil(value),
@@ -162,8 +167,24 @@ defmodule Feedex do
     do: date_published
 
   defp get_item_date(%{"updated" => updated}) when is_binary(updated), do: updated
-
+  defp get_item_date(%{"published" => published}) when is_binary(published), do: published
   defp get_item_date(%{"pub_date" => pub_date}) when is_binary(pub_date), do: pub_date
+
+  ##################### GET title ################################
+  defp get_item_title(%{"title" => %{"value" => value}}) when is_binary(value), do: value
+  defp get_item_title(%{"title" => title}) when is_binary(title), do: title
+  defp get_item_title(_), do: "No title"
+
+  ############### GET LINK #######################
+  defp get_item_link(%{"links" => links}) when is_list(links) and length(links) > 0 do
+    case links |> Enum.find(nil, &(&1["rel"] == "self")) do
+      nil -> links |> List.first() |> Map.get("href")
+      self_link -> self_link |> Map.get("href")
+    end
+  end
+
+  defp get_item_link(%{"link" => link}), do: link
+  defp get_item_link(%{"url" => url}), do: url
 
   # https://hexdocs.pm/timex/Timex.Format.DateTime.Formatters.Default.html#module-compound-directives
   def parse_date(date_string) do
