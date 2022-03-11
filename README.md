@@ -1,6 +1,6 @@
 # Feedex
 
-**TODO: Add description**
+A friendlier, all-in-one RSS feeds parser.
 
 ## Installation
 
