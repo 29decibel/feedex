@@ -1,4 +1,4 @@
-defmodule OpmlParser do
+defmodule Feedex.OpmlParser do
   # https://gist.github.com/sasa1977/5967224
   import Record, only: [defrecord: 2, extract: 2]
   defrecord :xmlElement, extract(:xmlElement, from_lib: "xmerl/include/xmerl.hrl")

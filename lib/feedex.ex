@@ -7,8 +7,10 @@ defmodule Feedex do
   # https://github.com/bitwalker/timex/blob/main/docs/Parsing.md
   @time_parsers ["{ISO:Extended}", "{RFC822}", "{RFC1123}"]
 
-  import FeedExtractor
-  import OpmlParser
+  import Feedex.FeedExtractor
+  import Feedex.OpmlParser
+  alias Feedex.TeslaClient
+  alias Feedex.FaviconFinder
 
   @moduledoc """
   Feedex is a RSS feed fetcher and parser

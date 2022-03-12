@@ -1,4 +1,4 @@
-defmodule FeedExtractor do
+defmodule Feedex.FeedExtractor do
   @moduledoc """
   Extract sematic content from the feed map
   """

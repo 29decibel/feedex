@@ -1,4 +1,4 @@
-defmodule TeslaClient do
+defmodule Feedex.TeslaClient do
   @moduledoc """
   Tesla client with Hackney and follow redirects
   """
