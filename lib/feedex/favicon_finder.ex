@@ -1,4 +1,6 @@
 defmodule Feedex.FaviconFinder do
+  alias Feedex.TeslaClient
+
   @moduledoc """
   Find the favicon path of given HTML or website url
   https://developers.google.com/search/docs/advanced/appearance/favicon-in-search
