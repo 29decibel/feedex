@@ -3,6 +3,36 @@ defmodule FeedExtractor do
   Extract sematic content from the feed map
   """
 
+  def get_feed_title(%{
+        "title" => %{
+          "value" => value
+        }
+      })
+      when is_binary(value),
+      do: value
+
+  def get_feed_title(%{"title" => title}) when is_binary(title), do: title
+
+  def get_feed_link(%{"link" => link}) when is_binary(link), do: link
+
+  def get_feed_link(%{"home_page_url" => home_page_url}) when is_binary(home_page_url),
+    do: home_page_url
+
+  def get_feed_link(%{"links" => links}) when is_list(links) and length(links) > 0 do
+    find_by_attr = fn name, value ->
+      links |> Enum.filter(&(Map.get(&1, name, nil) == value))
+    end
+
+    html_url = find_by_attr.("mime_type", "text/html")
+    alternative_url = find_by_attr.("rel", "alternative")
+
+    cond do
+      length(html_url) > 0 -> html_url |> List.first() |> Map.get("href")
+      length(alternative_url) > 0 -> alternative_url |> List.first() |> Map.get("href")
+      true -> links |> List.first() |> Map.get("href")
+    end
+  end
+
   ############### GRAB item content ########################
   def get_item_content(%{
         "content" => %{

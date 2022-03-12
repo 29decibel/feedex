@@ -3,6 +3,10 @@ defmodule Feedex do
     defstruct id: nil, title: nil, date: nil, content: nil, link: nil, authors: []
   end
 
+  defmodule Feed do
+    defstruct link: nil, title: nil, favicon: nil, items: []
+  end
+
   @json_header_value "application/json"
   # https://github.com/bitwalker/timex/blob/main/docs/Parsing.md
   @time_parsers ["{ISO:Extended}", "{RFC822}", "{RFC1123}"]
@@ -65,18 +69,26 @@ defmodule Feedex do
   end
 
   defp parse_rss_result_map(result) do
-    result
-    |> get_feed_items()
-    |> Enum.map(
-      &%Item{
-        id: get_item_id(&1),
-        title: get_item_title(&1),
-        date: get_item_date(&1) |> parse_date,
-        content: get_item_content(&1),
-        link: get_item_link(&1),
-        authors: get_item_authors(&1)
-      }
-    )
+    site_url = result |> get_feed_link()
+
+    %Feed{
+      title: result |> get_feed_title(),
+      link: site_url,
+      favicon: FaviconFinder.find_favicon(site_url),
+      items:
+        result
+        |> get_feed_items()
+        |> Enum.map(
+          &%Item{
+            id: get_item_id(&1),
+            title: get_item_title(&1),
+            date: get_item_date(&1) |> parse_date,
+            content: get_item_content(&1),
+            link: get_item_link(&1),
+            authors: get_item_authors(&1)
+          }
+        )
+    }
   end
 
   # https://hexdocs.pm/timex/Timex.Format.DateTime.Formatters.Default.html#module-compound-directives
